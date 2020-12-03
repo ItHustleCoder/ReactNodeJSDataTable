@@ -1,7 +1,8 @@
 import React , { useState , useEffect} from 'react';
 import {BootstrapTable, 
     TableHeaderColumn, SearchField, ClearSearchButton, ShowSelectedOnlyButton} from 'react-bootstrap-table';
-import {Button} from 'react-bootstrap';
+import {Button } from 'react-bootstrap';
+import Axios from 'axios';
 
 
 /* RenderSize */
@@ -26,10 +27,8 @@ function onAfterInsertRow(row) {
 
 
 function afterSearch(searchText, result) {
-    console.log('You serach text is' + searchText);
-    console.log('Result is: ');
     for( let i = 0; i < result.length; i++) {
-        console.log('Fruit: ' + result[i].idPuntovendita + ', ' + result[i].location + ', ' + result[i].Indirizzo); 
+        // console.log('Fruit: ' + result[i].idPuntovendita + ', ' + result[i].location + ', ' + result[i].Indirizzo); 
     }
 }
 
@@ -75,6 +74,7 @@ function afterSearch(searchText, result) {
         />
       )
   }
+  
 
 const options = {
     afterSearch: afterSearch,
@@ -92,7 +92,7 @@ const options = {
     }
 
     ],
-    sizePerPage: 5,
+    sizePerPage: 10,
     pageStartIndex: 0,
     paginationSize: 3,
     perPage: 'Prev',
@@ -109,17 +109,85 @@ const options = {
 
 export default function TableContent(props) {
 
-    function onSelectedRow(row, isSelected, e) {
-        if(isSelected) {
-            alert(`You are selected this row ${row['location']} with id ${row['idPuntovendita']}`);
-        }
+  /* Axios call */
+
+  const [box, setBox] = useState({});
+  const [update, setUpdate] = useState('');
+ 
+
+/* Two mode for axios */
+  const { idPuntovendita, location, regione, indirizzo} = box;
+
+    const axiosQuery= async() => {
+      await Axios.post('http://localhost:7070/about', {
+        header: {
+          'Content-type': 'application/json'
+        },
+
+        idPuntovendita,
+        location,
+        indirizzo,
+        regione
+       
+
+      }).then((res) => {
+        console.log(`Everthing is good ${res}`);
+      }).catch((err) => {
+        console.log(`Opps..Happend some error, ${err}`);
+      })
     }
+    
+  // async function axiosQuery() {
+  //   try {
+  //     const response = await Axios.post('http://localhost:7070/about', {post_data: box});
+  //     console.log('Data returned is :', response);
+
+  //   } catch(e) {
+  //     console.log('Axios request is failed');
+  //   }
+  // }
+ 
+   useEffect(() => {
+      axiosQuery();
+   },[update]);
+
+
+
+
+    function onRowSelect(row, isSelected, e) {
+      let rowStr = '';
+      for (const prop in row) {
+        rowStr += prop + ': "' + row[prop] + '"';
+      }
+      console.log(e);
+      setUpdate(e);
+      
+      
+      setBox(row);
+      alert(`is selected: ${isSelected}, ${rowStr}`);
+    }
+
+
+
+   function onSelectAll(isSelected, rows) {
+     alert(`is selected all: ${isSelected}`);
+     if(isSelected) {
+       alert('Current display and selcted data');
+     }else {
+       alert('unselecte rows ');
+     }
+     for(let i = 0; i < rows.length; i++) {
+      //  alert(rows[i].id);
+     }
+   }
+
     const selectRowProp = {
         mode: 'checkbox',
         clickToSelect:  true,
-        onSelect: onSelectedRow,
+        onSelect: onRowSelect,
         bgColor: 'gold',
-        showOnlySelected: true
+        showOnlySelected: true,
+        onSelectAll: onSelectAll
         
     };
     function buttonFormatter(cell, row){
@@ -129,13 +197,14 @@ export default function TableContent(props) {
             </Button>
         )
       }
-
+ 
       /* FIXME: changing width became not responsive */
 
     return(
         <div>
-        <BootstrapTable data={props.data} selectRow={selectRowProp} search={ true } options={ options }  pagination>
-          <TableHeaderColumn isKey width='50' hidden dataField='idPuntovendita'>
+         
+        <BootstrapTable data={props.data} selectRow={selectRowProp} search={ true } options={ options }  pagination={ true } >
+          <TableHeaderColumn isKey width='50' hidden  dataField='idPuntovendita'>
             ID
           </TableHeaderColumn>
           <TableHeaderColumn dataField='location' width='600' >
@@ -151,8 +220,15 @@ export default function TableContent(props) {
               Apply
           </TableHeaderColumn>
         </BootstrapTable>
+
+        {/* <Button  className="btn btn-outline mt-1 w-100">Click</Button> */}
       </div>
     )
+
+
+
+
+/* Previos version */
 
     // const [data, setData] = useState([]);
 

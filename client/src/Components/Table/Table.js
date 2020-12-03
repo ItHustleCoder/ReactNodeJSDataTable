@@ -12,8 +12,8 @@ export default function Table() {
         queryData();
     }, [])
     
-    const queryData = () => {
-        Axios.post('http://localhost:7070/puntivendita', {
+    const queryData = async() => {
+       await Axios.post('http://localhost:7070/puntivendita', {
             headers: {
                 'Content-type' : 'application/json'
             }
